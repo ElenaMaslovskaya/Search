@@ -4,27 +4,37 @@ import { useEffect, useState } from 'react';
 import Card from '../Card';
 import Button from '../Button';
 import Input from '../Input';
+import Spinner from '../Spinner';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('dog');
   const [cards, setCards] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
-    if(searchQuery !== ''){
-      api.search(searchQuery)
-      .then(data => {
-        const cards = data.results.map(item => {
-          return {
-            id: item.id,
-            src: item.urls.regular,
-            alt: item.alt_description,
-            title: item.user.name,
-            subtitle: item.description
-          }
-        })
-        setCards(cards);
-      })
-    }
+    handleRequest();
   }, [])
+
+  const handleRequest = () => {
+    if (searchQuery !== '') {
+      setIsLoading(true);
+      api.search(searchQuery)
+        .then(data => {
+          const cards = data.results.map(item => {
+            return {
+              id: item.id,
+              src: item.urls.regular,
+              alt: item.alt_description,
+              title: item.user.name,
+              subtitle: item.description
+            }
+          })
+          setCards(cards);
+        })
+        .catch(err => console.error(err))
+        .finally(() => setIsLoading(false))
+    }
+  }
 
   const handleInputChange = (e) => {
     setSearchQuery(e.target.value)
@@ -32,30 +42,33 @@ function App() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    
+    handleRequest();
   }
 
-  console.log('searchQuery', searchQuery)
   return (
     <div className="app">
       <div className="app__content">
         <form onSubmit={handleFormSubmit} className="app__search">
           <Input placeholder="Search free high-resolution photos" handleChange={handleInputChange} />
-          <Button text="Search" handleClick={()=> console.log(123)} />
+          <Button type="submit" text="Search" handleClick={() => console.log(123)} />
         </form>
-        <div className="app__cards">
-          {
-            cards.map(item =>
-              <Card
-                key={item.id}
-                src={item.src}
-                title={item.title}
-                subtitle={item.subtitle}
-                alt={item.alt}
-              />
-            )
-          }
-        </div>
+        {
+          isLoading
+            ? <Spinner />
+            : (<div className="app__cards">
+              {
+                cards.map(item =>
+                  <Card
+                    key={item.id}
+                    src={item.src}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    alt={item.alt}
+                  />
+                )
+              }
+            </div>)
+        }
       </div>
     </div>
   );
