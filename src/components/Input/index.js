@@ -1,8 +1,8 @@
 import './index.css';
 
-const Input = ({placeholder, handleChange}) => {
+const Input = (props) => {
    return (
-      <input className="input" placeholder={placeholder} onChange={handleChange} />
+      <input className="input" {...props} />
    )
 }
 

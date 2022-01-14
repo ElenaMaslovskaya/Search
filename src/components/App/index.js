@@ -1,76 +1,62 @@
-import './index.css';
 import api from '../../utils/Api';
-import { useEffect, useState } from 'react';
-import Card from '../Card';
-import Button from '../Button';
-import Input from '../Input';
-import Spinner from '../Spinner';
+import { useEffect, useState, useCallback } from 'react';
+import { Route } from 'react-router-dom/cjs/react-router-dom.min';
+import { Switch } from 'react-router-dom';
+import { Main } from '../Main';
+import NotFound from '../NotFound';
+import { Photo } from '../Photo';
+import { CardContext } from '../../context/CardContext';
+import { useApi } from "../../hooks/useApi";
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('dog');
+
+  const handler = useCallback(() => {
+    return api.search(searchQuery);
+  }, [searchQuery]);
+
+  const { data, loading, error } = useApi(handler);
+  /*
   const [cards, setCards] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    handleRequest();
-  }, [])
-
-  const handleRequest = () => {
-    if (searchQuery !== '') {
-      setIsLoading(true);
-      api.search(searchQuery)
-        .then(data => {
-          const cards = data.results.map(item => {
-            return {
-              id: item.id,
-              src: item.urls.regular,
-              alt: item.alt_description,
-              title: item.user.name,
-              subtitle: item.description
-            }
+    const handleRequest = () => {
+      if (searchQuery !== '') {
+        setIsLoading(true);
+        api.search(searchQuery)
+          .then((data) => {
+            setCards(data);
           })
-          setCards(cards);
-        })
-        .catch(err => console.error(err))
-        .finally(() => setIsLoading(false))
+          .catch(err => console.error(err))
+          .finally(() => setIsLoading(false))
+      }
     }
-  }
-
-  const handleInputChange = (e) => {
-    setSearchQuery(e.target.value)
-  }
-
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
     handleRequest();
+  }, [searchQuery]);
+*/
+  const onSubmit = (value) => {
+    setSearchQuery(value)
   }
 
   return (
-    <div className="app">
-      <div className="app__content">
-        <form onSubmit={handleFormSubmit} className="app__search">
-          <Input placeholder="Search free high-resolution photos" handleChange={handleInputChange} />
-          <Button type="submit" text="Search" handleClick={() => console.log(123)} />
-        </form>
-        {
-          isLoading
-            ? <Spinner />
-            : (<div className="app__cards">
-              {
-                cards.map(item =>
-                  <Card
-                    key={item.id}
-                    src={item.src}
-                    title={item.title}
-                    subtitle={item.subtitle}
-                    alt={item.alt}
-                  />
-                )
-              }
-            </div>)
-        }
-      </div>
-    </div>
+    <CardContext.Provider value={data}>
+      <Switch>
+        <Route path="/" exact>
+          <Main
+            onSubmit={onSubmit}
+            initialValue={searchQuery}
+            isLoading={loading}
+          />
+        </Route>
+        <Route path="/photos/:photoId">
+          <Photo />
+        </Route>
+        <Route path="*">
+          <NotFound />
+        </Route>
+      </Switch>
+    </CardContext.Provider>
   );
 }
 
